@@ -13,6 +13,8 @@
 #define NOISE_RATIO 0.1f
 #define ROUGHNESS 10
 
+extern void setPixel(SDL_Surface *s, int x, int y, int color);
+
 extern int seed;
 extern int SCREENX;
 extern int SCREENY;

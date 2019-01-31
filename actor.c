@@ -6,6 +6,7 @@
  */
 
 #include <math.h>
+#include <stdlib.h>
 #include <SDL/SDL.h>
 #include <SDL/SDL_image.h>
 #include "planet.h"
@@ -87,9 +88,15 @@ void actor_update(Actor *p)
     p->animate = 0;
 
     SDL_FillRect(rotbuf, 0, 0);
-    if(p->rebirth) matrix_rotateImage(sprite_get(egg)[p->activeSprite], rotbuf, planet_getSlope(TOP - angle) + angle, p->left);
-    else
-    matrix_rotateImage(sprite_get(p->state)[p->activeSprite], rotbuf, planet_getSlope(TOP - angle) + angle, p->left);
+    SDL_Surface *src;
+    if (SDL_MUSTLOCK(rotbuf)) SDL_LockSurface(rotbuf);
+    if(p->rebirth) src = sprite_get(egg)[p->activeSprite];
+    else src = sprite_get(p->state)[p->activeSprite];
+
+    if (SDL_MUSTLOCK(src)) SDL_LockSurface(src);
+    matrix_rotateImage(src, rotbuf, planet_getSlope(TOP - angle) + angle, p->left);
+    if (SDL_MUSTLOCK(src)) SDL_UnlockSurface(src);
+    if (SDL_MUSTLOCK(rotbuf)) SDL_UnlockSurface(rotbuf);
 
     if(p->life <= 0)
         actor_kill(p);

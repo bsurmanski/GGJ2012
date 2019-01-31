@@ -29,6 +29,7 @@ List *list_new(size_t eleSz)
     l->eleSz = eleSz;
     l->first = 0;
     l->itter = 0;
+    return l;
 }
 
 void list_add(List *l, void *ele)

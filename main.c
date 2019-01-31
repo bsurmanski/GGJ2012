@@ -6,14 +6,21 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 #include <SDL/SDL.h>
 #include <SDL/SDL_image.h>
 #include <math.h>
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
+
 #include "planet.h"
 #include "actor.h"
 #include "sprite.h"
+#include "particle.h"
+#include "actor.h"
 
 int SCREENX = 320;
 int SCREENY = 240;
@@ -37,6 +44,8 @@ int title = 1;
 
 void upscaleCopy(SDL_Surface *dest, SDL_Surface *src, int scale)
 {
+    //SDL_BlitScaled(src, 0, dest, 0);
+    if (SDL_MUSTLOCK(dest)) SDL_LockSurface(dest);
     int i, j, k;
     for(j = 0; j < src->h; j++){
         for(i = 0; i < src->w; i++){
@@ -53,6 +62,8 @@ void upscaleCopy(SDL_Surface *dest, SDL_Surface *src, int scale)
                 );
         }*/
     }
+    if (SDL_MUSTLOCK(dest)) SDL_UnlockSurface(dest);
+    //return;
 }
 
 int inSurface(SDL_Surface *s, int x, int y)
@@ -85,6 +96,7 @@ int getPixel(SDL_Surface *s, int x, int y)
 void init(void)
 {
     int i, j;
+    SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO);
     scaled = SDL_SetVideoMode(SCREENX*2, SCREENY*2, 32, SDL_SWSURFACE);
 
     s = SDL_CreateRGBSurface(SDL_SWSURFACE,
@@ -123,7 +135,7 @@ extern double angle;
 void handleEvents(void)
 {
     SDL_PumpEvents();
-    uint8_t *keystate = SDL_GetKeyState(0);
+    const uint8_t *keystate = SDL_GetKeyboardState(NULL);
     SDL_Event event;
      while( SDL_PollEvent( &event ) ){
             //If the user has Xed out the window
@@ -131,14 +143,15 @@ void handleEvents(void)
             running = 0;
         }
     }
-    if(keystate[SDLK_ESCAPE])
-        running = 0;
+    //if(keystate[SDLK_ESCAPE])
+    //    running = 0;
 
     if(title){
-        if(keystate[SDLK_SPACE] || keystate[SDLK_RETURN])
+        if(keystate[SDLK_SPACE] || keystate[SDLK_RETURN]) {
             title = 0;
+        }
     } else {
-        if(keystate[SDLK_q])
+        if(keystate[SDL_SCANCODE_Q])
             actor_kill(player);
 
         if(keystate[SDLK_LEFT] && !player->rebirth){
@@ -181,16 +194,26 @@ void update(void)
 
 void draw(void)
 {
-    SDL_FillRect(scaled, 0, 0x00000000);
+    SDL_FillRect(scaled, 0, SDL_MapRGB(scaled->format, 0, 0, 0));
     if(title){
         upscaleCopy(scaled, titlesurf, 2);
     } else {
-        SDL_FillRect(s, 0, 0x00000000);
+        SDL_FillRect(s, 0, SDL_MapRGB(s->format, 0, 0, 0));
+        if (SDL_MUSTLOCK(s)) SDL_LockSurface(s);
         planet_draw(s);
-        particle_draw();
+        particle_draw(s);
+        if (SDL_MUSTLOCK(s)) SDL_UnlockSurface(s);
         actor_draw(player, s);
         upscaleCopy(scaled, s, 2);
     }
+}
+
+void tick() {
+    handleEvents();
+    update();
+    draw();
+    //SDL_FillRect(scaled, 0, SDL_MapRGB(scaled->format, 255, 0, 0));
+    SDL_Flip(scaled);
 }
 
 
@@ -199,18 +222,19 @@ void run(void)
     running = 1;
     int time = SDL_GetTicks();
     int delay;
-    while(running){
-        handleEvents();
-        update();
-        draw();
 
-        SDL_Flip(scaled);
+#ifdef __EMSCRIPTEN__
+    emscripten_set_main_loop(tick, 0, 1);
+#else
+    while(running){
+        tick();
         //delay
         delay = 16 - (SDL_GetTicks() - time);
         if(delay > 0)
             SDL_Delay(delay);
         time = SDL_GetTicks();
     }
+#endif
 }
 
 

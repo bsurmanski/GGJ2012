@@ -47,6 +47,8 @@ Actor *actor_new(enum State s);
 void actor_init(void);
 void actor_draw(Actor *p, SDL_Surface *s);
 void actor_update(Actor *p);
+void actor_crack(Actor *p);
+void actor_animate(Actor *p);
 void actor_kill(Actor *p);
 void actor_damage(Actor *p);
 

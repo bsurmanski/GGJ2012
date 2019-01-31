@@ -5,3 +5,5 @@
 *.bak
 stdout.txt
 jam
+.DS_Store
+bin/

@@ -7,6 +7,9 @@
 
 #include <SDL/SDL.h>
 #include <SDL/SDL_image.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 #include "sprite.h"
 #include "actor.h"

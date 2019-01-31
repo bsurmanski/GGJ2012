@@ -7,6 +7,8 @@
 
 #include <SDL/SDL.h>
 #include <float.h>
+#include <stdlib.h>
+#include <string.h>
 #include <math.h>
 #include "list.h"
 #include "actor.h"
@@ -38,6 +40,7 @@ void particle_init(void)
 
 int particle_update()
 {
+    if (SDL_MUSTLOCK(s)) SDL_LockSurface(s);
     Particle *p;
     int remove = 0;
     while((p = list_itter(pList))){
@@ -68,16 +71,20 @@ int particle_update()
         if(remove || p->life < 0){
             remove = 0;
             list_removeLastItter(pList);
+            actor_kill(player);
         }
 
-    int x = (int)(p->position[0] * (radius / 150.0f) + xoffset);
-    int y = (int)(p->position[1] * (radius / 150.0f) + yoffset);
-    int pxl = getPixel(s, x, y);
-    if(pxl != 0xFFFFFFFF && pxl != 0x00000000)
-    {
-        actor_kill(player);
+        int x = (int)(p->position[0] * (radius / 150.0f) + xoffset);
+        int y = (int)(p->position[1] * (radius / 150.0f) + yoffset);
+        int pxl = getPixel(s, x, y);
+        if(pxl != 0xFFFFFFFF && pxl != 0x00000000)
+        {
+            // this doesn't work well with emscripten
+            //actor_kill(player);
+        }
     }
-    }
+
+    if (SDL_MUSTLOCK(s)) SDL_UnlockSurface(s);
 
     return 0;
     //return (p->life >= 0);
